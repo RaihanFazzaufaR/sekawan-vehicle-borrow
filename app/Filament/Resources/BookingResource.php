@@ -32,7 +32,7 @@ class BookingResource extends Resource
 {
     protected static ?string $model = Booking::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static ?string $navigationIcon = 'heroicon-o-chat-bubble-left-ellipsis';
 
     static function getDriver(int $workplace)
     {
@@ -95,9 +95,9 @@ class BookingResource extends Resource
                             ->afterStateHydrated(fn($set) => $set('admin_id', $current_user->id)),
 
                         Forms\Components\Select::make('booker_id')
-                            ->label('Booker')
-                            ->options($options['staff'])
-                            ->required(),
+                            ->options(function () use ($current_user) {
+                                return Staff::where('company_id', $current_user->company_id)->pluck('full_name', 'staff_id');
+                            }),
 
                         Forms\Components\Select::make('vehicle_type')
                             ->label('Vehicle Type')
@@ -134,12 +134,26 @@ class BookingResource extends Resource
                                 }
                                 return $vehicleOps;
                             })
-                            ->required(),
+                            ->required()
+                            ->visibleOn('create'),
+
+                        Forms\Components\Select::make('vehicle_id_')
+                            ->label('Vehicle')
+                            ->preload()
+                            ->options(function ($get) use ($record) {
+                                $vehicle = Vehicle::find($record->vehicle_id);
+                                return [$vehicle->vehicle_id => ($vehicle->brand . ' ' . $vehicle->model . ' [' . $vehicle->license_plate . ']')];
+                            })
+                            ->afterStateHydrated(
+                                fn($set) => $set('vehicle_id_', $record->vehicle_id ?? null)
+                            )
+                            ->visibleOn('view'),
 
                         Forms\Components\Select::make('driver_id')
                             ->label('Driver')
+                            ->columnSpanFull()
                             ->preload()
-                            ->options(function ($get) {
+                            ->options(function ($get) use ($current_user) {
                                 $admin_id = $get('admin_id');
 
                                 if (!$admin_id) {
@@ -150,31 +164,50 @@ class BookingResource extends Resource
                                 $driverOps = [];
 
                                 foreach ($data as $driver) {
-                                    $driverOps[$driver->driver_id] = $driver->staff->full_name;
+                                    if ($driver->staff->company_id == $current_user->company_id) {
+                                        $driverOps[$driver->driver_id] = $driver->staff->full_name;
+                                    }
                                 }
                                 return $driverOps;
                             })
                             ->required()
                             ->afterStateHydrated(
-                                // dd($record)
                                 fn($set) => $set('driver_id', $record->driver_id ?? null)
-                            ),
+                            )
+                            ->visibleOn('create'),
+
+                        Forms\Components\Select::make('driver_id_')
+                            ->label('Driver')
+                            ->columnSpanFull()
+                            ->preload()
+                            ->options(function ($get) use ($record) {
+                                $driver = Driver::find($record->driver_id);
+                                return [$driver->driver_id => $driver->staff->full_name];
+                            })
+                            ->afterStateHydrated(
+                                fn($set) => $set('driver_id_', $record->driver_id ?? null)
+                            )
+                            ->visibleOn('view'),
 
                         Forms\Components\DatePicker::make('booking_date')->label('Booking Date')
                             ->readOnly()
+                            ->columnSpanFull()
                             ->default(now()->format('Y-m-d'))
-                            ->hidden(fn($livewire) => $livewire instanceof \Filament\Resources\Pages\CreateRecord),
+                            ->visibleOn('view'),
 
                         Forms\Components\DatePicker::make('start_date')->label('Start Date')
                             ->format('Y-m-d')
-                            ->required(),
+                            ->required()
+                            ->columnSpanFull(),
 
                         Forms\Components\DatePicker::make('end_date')->label('End Date')
                             ->format('Y-m-d')
-                            ->required(),
+                            ->required()
+                            ->columnSpanFull(),
 
                         Forms\Components\Textarea::make('purpose')
                             ->label('Purpose')
+                            ->columnSpanFull()
                             ->afterStateHydrated(fn($set) => $set('purpose', $record->purpose ?? null)),
 
                         Repeater::make('booking_approvals')
@@ -192,6 +225,7 @@ class BookingResource extends Resource
                                     ->required(),
                             ])
                             ->visibleOn('create')
+                            ->columnSpanFull()
                             ->minItems(1),
                     ],
                     $record ? array_map(
@@ -199,6 +233,7 @@ class BookingResource extends Resource
                         // error_log(json_encode($approval))
                         Forms\Components\Select::make('approver-' . $approval['approval_level'])
                             ->label('Approver Level ' . $approval['approval_level'])
+                            ->columnSpanFull()
                             ->multiple()
                             ->preload()
                             ->options(function () use ($record) {
@@ -225,9 +260,7 @@ class BookingResource extends Resource
                                     }
                                     $set('approver-' . $approval['approval_level'], $data);
                                 }
-                            )
-                        //
-                        ,
+                            ),
                         BookingApprovals::select(['approval_level', 'booking_id'])
                             ->distinct()
                             ->where('booking_id', $record->booking_id)
@@ -241,14 +274,23 @@ class BookingResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
+            ->defaultSort('booking_date', '')
             ->columns([
                 TextColumn::make('user.name')->label('Admin')->searchable(),
                 TextColumn::make('staff.full_name')->label('Booker')->searchable(),
                 TextColumn::make('driver.staff.full_name')->label('Driver')->searchable(),
                 TextColumn::make('vehicle.vehicle_type')->label('Vehicle Type'),
                 TextColumn::make('booking_date')->label('Booking Date'),
-                TextColumn::make('status')->label('Status'),
+                TextColumn::make('status')
+                    ->label('Status')
+                    ->badge()
+                    ->color(fn($state) => match ($state) {
+                        'rejected' => 'danger',
+                        'approved' => 'success',
+                        'pending' => 'info',
+                    }),
             ])
+            ->modifyQueryUsing(function (Builder $query) {})
             ->filters([])
             ->actions([
                 Tables\Actions\ViewAction::make(),
