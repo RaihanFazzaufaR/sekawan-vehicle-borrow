@@ -14,20 +14,19 @@ class VehicleLogSeeder extends Seeder
      */
     public function run(): void
     {
+        $vehicleIds = DB::table('vehicles')
+        ->pluck('vehicle_id')
+        ->toArray();
+
         $faker = Faker::create();
 
-        // Fetch bookings where the end_date has already passed
-        $bookings = DB::table('bookings')
-            ->where('end_date', '<', now())
-            ->get();
-
         $data = [];
-        foreach ($bookings as $booking) {
+        for ($i = 0; $i < 60; $i++) {
             $data[] = [
-                'vehicle_id' => $booking->vehicle_id,
-                'booking_id' => $booking->booking_id,
+                'vehicle_id' => $faker->randomElement($vehicleIds),
                 'distance' => $faker->numberBetween(50, 100),
                 'fuel_consumed' => $faker->randomFloat(2, 5, 50),
+                'created_at' => $faker->dateTimeBetween('-1 year', 'now'),
             ];
         }
 

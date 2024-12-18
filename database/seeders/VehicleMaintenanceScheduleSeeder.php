@@ -22,13 +22,15 @@ class VehicleMaintenanceScheduleSeeder extends Seeder
             ->toArray();
 
         $data = [];
-        for ($i = 0; $i < 30; $i++) {
+        for ($i = 0; $i < 50; $i++) {
             $data[] = [
                 'vehicle_id' => $faker->randomElement($vehicleIds),
-                'date' => $faker->dateTimeBetween('-1 year', '+1 year')->format('Y-m-d'),
+                'maintenance_date' => $faker->dateTimeBetween('-1 year', '+1 year')->format('Y-m-d'),
                 'description' => $faker->sentence(),
                 'status' => $faker->randomElement(['scheduled', 'completed']),
             ];
         }
+
+        DB::table('vehicle_maintenance_schedules')->insert($data);
     }
 }

@@ -13,6 +13,7 @@ class VehicleMaintenanceSchedule extends Model
         'vehicle_id',
         'maintenance_date',
         'description',
+        'status',
     ];
 
     public function vehicle()

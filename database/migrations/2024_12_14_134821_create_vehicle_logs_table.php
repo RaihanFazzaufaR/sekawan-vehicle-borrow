@@ -14,9 +14,9 @@ return new class extends Migration
         Schema::create('vehicle_logs', function (Blueprint $table) {
             $table->id('log_id');
             $table->unsignedBigInteger('vehicle_id');
-            $table->unsignedBigInteger('booking_id');
             $table->bigInteger('distance');
             $table->decimal('fuel_consumed', 10, 2);
+            $table->timestamps();
         });
     }
 

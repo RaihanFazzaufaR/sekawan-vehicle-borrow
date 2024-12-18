@@ -11,7 +11,6 @@ class VehicleLogs extends Model
     protected $fillable =
     [
         'vehicle_id',
-        'booking_id',
         'distance',
         'fuel_consumed',
     ];

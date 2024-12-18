@@ -43,7 +43,7 @@ class Booking extends Model
 
     public function vehicleLogs()
     {
-        return $this->hasOne(VehicleLogs::class, 'booking_id', 'booking_id');
+        return $this->hasMany(VehicleLogs::class, 'booking_id', 'booking_id');
     }
 
     public function booking_approvals()
