@@ -14,10 +14,13 @@ class UsersSeeder extends Seeder
      */
     public function run(): void
     {
+        $faker = \Faker\Factory::create();
+
         $data = 
         [ 
             [
-                'username' => 'Admin1',
+                'name' => 'Admin1',
+                'email' => $faker->unique()->safeEmail,
                 'password' => bcrypt('password123'),
                 'full_name' => 'Central Admin',
                 'role' => 'admin',
@@ -25,7 +28,8 @@ class UsersSeeder extends Seeder
                 'level' => 0,
             ],
             [
-                'username' => 'Admin2',
+                'name' => 'Admin2',
+                'email' => $faker->unique()->safeEmail,
                 'password' => bcrypt('password123'),
                 'full_name' => 'Eastern Branch Admin',
                 'role' => 'admin',
@@ -33,7 +37,8 @@ class UsersSeeder extends Seeder
                 'level' => 0,
             ],
             [
-                'username' => 'Admin3',
+                'name' => 'Admin3',
+                'email' => $faker->unique()->safeEmail,
                 'password' => bcrypt('password123'),
                 'full_name' => 'Western Branch Admin',
                 'role' => 'admin',
@@ -41,7 +46,8 @@ class UsersSeeder extends Seeder
                 'level' => 0,
             ],
             [
-                'username' => 'HeadEast',
+                'name' => 'HeadEast',
+                'email' => $faker->unique()->safeEmail,
                 'password' => bcrypt('password123'),
                 'full_name' => 'Eastern Branch Company Head',
                 'role' => 'approver',
@@ -49,7 +55,8 @@ class UsersSeeder extends Seeder
                 'level' => 2,
             ],
             [
-                'username' => 'HeadWest',
+                'name' => 'HeadWest',
+                'email' => $faker->unique()->safeEmail,
                 'password' => bcrypt('password123'),
                 'full_name' => 'Western Branch Company Head',
                 'role' => 'approver',
@@ -57,7 +64,8 @@ class UsersSeeder extends Seeder
                 'level' => 2,
             ],
             [
-                'username' => 'HeadCentral',
+                'name' => 'HeadCentral',
+                'email' => $faker->unique()->safeEmail,
                 'password' => bcrypt('password123'),
                 'full_name' => 'Central Company Head',
                 'role' => 'approver',
@@ -65,7 +73,8 @@ class UsersSeeder extends Seeder
                 'level' => 2,
             ],
             [
-                'username' => 'SupervisorEast',
+                'name' => 'SupervisorEast',
+                'email' => $faker->unique()->safeEmail,
                 'password' => bcrypt('password123'),
                 'full_name' => 'Eastern Branch Supervisor',
                 'role' => 'approver',
@@ -73,7 +82,8 @@ class UsersSeeder extends Seeder
                 'level' => 1,
             ],
             [
-                'username' => 'SupervisorWest',
+                'name' => 'SupervisorWest',
+                'email' => $faker->unique()->safeEmail,
                 'password' => bcrypt('password123'),
                 'full_name' => 'Western Branch Supervisor',
                 'role' => 'approver',
@@ -81,7 +91,8 @@ class UsersSeeder extends Seeder
                 'level' => 1,
             ],
             [
-                'username' => 'SupervisorCentral',
+                'name' => 'SupervisorCentral',
+                'email' => $faker->unique()->safeEmail,
                 'password' => bcrypt('password123'),
                 'full_name' => 'Central Company Supervisor',
                 'role' => 'approver',
