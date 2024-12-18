@@ -20,7 +20,7 @@ class BookingSeeder extends Seeder
         $faker = Faker::create();
 
         $userIds = DB::table('users')
-            ->where('level', 0)
+            ->where('role', 'admin')
             ->pluck('id')
             ->toArray();
 

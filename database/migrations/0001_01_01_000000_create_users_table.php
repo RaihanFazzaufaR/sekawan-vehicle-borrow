@@ -21,7 +21,6 @@ return new class extends Migration
             $table->string('full_name');
             $table->enum('role', ['approver', 'admin'])->default('approver');
             $table->unsignedBigInteger('company_id');
-            $table->integer('level')->default(1);
             $table->timestamp('email_verified_at')->nullable();
             $table->rememberToken();
             $table->timestamps();

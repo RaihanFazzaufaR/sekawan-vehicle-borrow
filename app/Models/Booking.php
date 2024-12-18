@@ -48,6 +48,6 @@ class Booking extends Model
 
     public function booking_approvals()
     {
-        return $this->hasOne(BookingApprovals::class, 'booking_id', 'booking_id');
+        return $this->hasMany(BookingApprovals::class, 'booking_id', 'booking_id');
     }
 }
