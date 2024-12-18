@@ -12,6 +12,7 @@ class Vehicle extends Model
     [
         'ownership_id',
         'license_plate',
+        'vehicle_type',
         'brand',
         'model',
         'status',

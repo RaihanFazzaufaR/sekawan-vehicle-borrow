@@ -2,6 +2,10 @@
 
 namespace Database\Seeders;
 
+use App\Models\Booking;
+use App\Models\Driver;
+use App\Models\Staff;
+use App\Models\User;
 use Illuminate\Database\Seeder;
 use Faker\Factory as Faker;
 use Illuminate\Support\Facades\DB;
@@ -24,92 +28,79 @@ class BookingSeeder extends Seeder
             ->pluck('staff_id')
             ->toArray();
 
-        $driverIds = DB::table('drivers')
-            ->where('status', 'available')
-            ->pluck('driver_id')
-            ->toArray();
-
         $vehicleIds = DB::table('vehicles')
             ->where('status', 'available')
             ->pluck('vehicle_id')
             ->toArray();
 
-        shuffle($driverIds);
         shuffle($vehicleIds);
 
-        if (count($driverIds) > 15) {
-            $driverIds = array_slice($driverIds, 0, 15);
-        }
         if (count($vehicleIds) > 15) {
             $vehicleIds = array_slice($vehicleIds, 0, 15);
         }
 
-        $numOfBookings = min(count($driverIds), count($vehicleIds));
+        $numOfBookings = count($vehicleIds);
 
-        $data = [];
+        $companiesId = User::where('role', 'admin')->pluck('company_id')->toArray();
+        $adminsCompanyStaff = array_filter(Staff::all()->toArray(), fn($record) => in_array($record['company_id'], $companiesId));
+        $drivers = array_filter(Driver::all()->toArray(), fn($record) => in_array($record['staff_id'], array_column($adminsCompanyStaff, 'staff_id')));
+
         for ($i = 0; $i < $numOfBookings; $i++) {
-            $bookingDate = $faker->dateTimeBetween('-3 months', 'now');
-            $startDate = $faker->dateTimeBetween($bookingDate, $bookingDate->modify('+1 months'));
-            $endDate = $faker->dateTimeBetween($startDate, $startDate->modify('+1 month'));
+            foreach ($companiesId as $companyId) {
+                $selectedStaffIds = $faker->randomElement(array_filter($adminsCompanyStaff, fn($record) => $record['company_id'] == $companyId));
+                $selectedDriver = $faker->randomElement(
+                    Driver::where('staff_id', $selectedStaffIds['staff_id'])->get()->toArray(),
+                );
+                // dd($selectedDriver);
 
-            $status = $endDate < now() ? 'approved' : $faker->randomElement(['pending', 'approved', 'rejected']);
+                if (!$selectedDriver) continue;
 
-            $data[] = [
-                'admin_id' => $faker->randomElement($userIds),
-                'vehicle_id' => $vehicleIds[$i],
-                'driver_id' => $driverIds[$i],
-                'booker_id' => $faker->randomElement($staffIds),
-                'booking_date' => $bookingDate->format('Y-m-d'),
-                'start_date' => $startDate->format('Y-m-d'),
-                'end_date' => $endDate->format('Y-m-d'),
-                'status' => $status,
-                'purpose' => $faker->randomElement([$faker->sentence(3), null]),
-            ];
-
-            if ($status === 'approved' && $endDate < now()) {
-                DB::table('drivers')
-                    ->where('driver_id', $driverIds[$i])
-                    ->update(['status' => 'available']);
-
-                DB::table('vehicles')
-                    ->where('vehicle_id', $vehicleIds[$i])
-                    ->update(['status' => 'available']);
-            } elseif ($status === 'approved') {
-                DB::table('drivers')
-                    ->where('driver_id', $driverIds[$i])
-                    ->update(['status' => 'unavailable']);
-
-                DB::table('vehicles')
-                    ->where('vehicle_id', $vehicleIds[$i])
-                    ->update(['status' => 'booked']);
+                Booking::create([
+                    'booker_id' => $selectedStaffIds['staff_id'],
+                    'admin_id' => User::where('company_id', $companyId)->where('role', 'admin')->first()->id,
+                    'driver_id' => $selectedDriver['driver_id'],
+                    'vehicle_id' => $faker->randomElement($vehicleIds),
+                    'start_date' => $faker->dateTimeBetween('-1 month', 'now'),
+                    'end_date' => $faker->dateTimeBetween('now', '+1 month'),
+                    'status' => $faker->randomElement(['pending', 'approved', 'rejected']),
+                    // 'company_id' => $companyId,
+                ]);
             }
         }
 
-        // Sort the data by booking_date from oldest to latest
-        usort($data, function ($a, $b) {
-            return strtotime($a['booking_date']) - strtotime($b['booking_date']);
-        });
+        //     foreach ($vehicleIds as $vehicleId) {
+        //         $bookerId = $faker->randomElement($staffIds);
 
-        DB::table('bookings')->insert($data);
+        //         DB::table('bookings')->insert([
+        //             'booker_id' => $bookerId,
+        //             'admin_id' => $faker->randomElement($userIds),
+        //             'driver_id' => $faker->randomElement($staffIds),
+        //             'vehicle_id' => $vehicleId,
+        //             'start_date' => $faker->dateTimeBetween('-1 month', 'now'),
+        //             'end_date' => $faker->dateTimeBetween('now', '+1 month'),
+        //             'status' => $faker->randomElement(['pending', 'approved', 'rejected']),
+        //             'company_id' => $companyId,
+        //         ]);
+        //     }
 
-        $approvedDriverIds = DB::table('bookings')
-            ->where('status', 'approved')
-            ->where('end_date', '<', now())
-            ->pluck('driver_id')
-            ->toArray();
+        //     $approvedDriverIds = DB::table('bookings')
+        //         ->where('status', 'approved')
+        //         ->where('end_date', '<', now())
+        //         ->pluck('driver_id')
+        //         ->toArray();
 
-        DB::table('drivers')
-            ->whereIn('driver_id', $approvedDriverIds)
-            ->update(['status' => 'available']);
+        //     DB::table('drivers')
+        //         ->whereIn('driver_id', $approvedDriverIds)
+        //         ->update(['status' => 'available']);
 
-        $approvedVehicleIds = DB::table('bookings')
-            ->where('status', 'approved')
-            ->where('end_date', '<', now())
-            ->pluck('vehicle_id')
-            ->toArray();
+        //     $approvedVehicleIds = DB::table('bookings')
+        //         ->where('status', 'approved')
+        //         ->where('end_date', '<', now())
+        //         ->pluck('vehicle_id')
+        //         ->toArray();
 
-        DB::table('vehicles')
-            ->whereIn('vehicle_id', $approvedVehicleIds)
-            ->update(['status' => 'available']);
+        //     DB::table('vehicles')
+        //         ->whereIn('vehicle_id', $approvedVehicleIds)
+        //         ->update(['status' => 'available']);
     }
 }
