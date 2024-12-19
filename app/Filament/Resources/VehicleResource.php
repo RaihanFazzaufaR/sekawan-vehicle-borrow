@@ -21,7 +21,7 @@ class VehicleResource extends Resource
 {
     protected static ?string $model = Vehicle::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static ?string $navigationIcon = 'heroicon-o-stop-circle';
 
     public static function form(Form $form): Form
     {
@@ -66,7 +66,7 @@ class VehicleResource extends Resource
                     ->afterStateHydrated(function ($set) use ($record) {
                         $set('status', $record->status ?? 'available');
                     })
-                    ->visibleOn(['view']),
+                    ->visibleOn(['view', 'edit']),
             ]);
     }
 

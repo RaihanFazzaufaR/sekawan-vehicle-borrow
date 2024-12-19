@@ -3,11 +3,17 @@
 namespace App\Providers\Filament;
 
 use App\Filament\Auth\CustomLogin;
+use App\Filament\Resources\ApprovalResource;
+use App\Filament\Resources\BookingResource;
+use App\Filament\Resources\VehicleResource;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
+use Filament\Navigation\NavigationBuilder;
+use Filament\Navigation\NavigationGroup;
 use Filament\Pages;
+use Filament\Pages\Dashboard;
 use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
@@ -17,6 +23,7 @@ use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
 
 class AdminPanelProvider extends PanelProvider
@@ -27,7 +34,7 @@ class AdminPanelProvider extends PanelProvider
             ->default()
             ->id('admin')
             ->path('')
-            ->login( CustomLogin::class)
+            ->login(CustomLogin::class)
             ->brandLogo(asset('img/logo.png'))
             ->colors([
                 'primary' => Color::Cyan,
@@ -41,8 +48,8 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\\Filament\\Widgets')
             ->widgets([
+                // Widgets\FilamentInfoWidget::class,
                 Widgets\AccountWidget::class,
-                Widgets\FilamentInfoWidget::class,
             ])
             ->middleware([
                 EncryptCookies::class,
@@ -57,6 +64,30 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->authMiddleware([
                 Authenticate::class,
-            ]);
+            ])
+            ->navigation(function (NavigationBuilder $builder): NavigationBuilder {
+                $user = Auth::user();
+                $userRole = $user?->role;
+                $bookingOrApproval = $userRole === 'admin' ? 'Booking Section' : 'Approval Section';
+                $bookingItems = $userRole === 'admin' ? BookingResource::getNavigationItems() : [];
+                $vehicleGroup = $userRole === 'admin' ? [
+                    NavigationGroup::make('Vehicle Section')->items(
+                        VehicleResource::getNavigationItems()
+                    )
+                ] : [];
+
+                return $builder->items([
+                    ...Dashboard::getNavigationItems(),
+                ])
+                ->groups([
+                    NavigationGroup::make($bookingOrApproval)->items(
+                        array_merge(
+                            $bookingItems,
+                            ApprovalResource::getNavigationItems()
+                        )
+                    ),
+                    ...$vehicleGroup,
+                ]);
+            });
     }
 }

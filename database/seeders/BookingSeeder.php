@@ -60,8 +60,9 @@ class BookingSeeder extends Seeder
                     'admin_id' => User::where('company_id', $companyId)->where('role', 'admin')->first()->id,
                     'driver_id' => $selectedDriver['driver_id'],
                     'vehicle_id' => $faker->randomElement($vehicleIds),
-                    'start_date' => $faker->dateTimeBetween('-1 month', 'now'),
-                    'end_date' => $faker->dateTimeBetween('now', '+1 month'),
+                    'booking_date' => $faker->dateTimeBetween('-1 month', 'now -1 day'),
+                    'start_date' => $faker->dateTimeBetween('now', '+1 month'),
+                    'end_date' => $faker->dateTimeBetween('+1 month', '+2 month'),
                     'status' => $faker->randomElement(['pending', 'approved', 'rejected']),
                     // 'company_id' => $companyId,
                 ]);

@@ -12,12 +12,14 @@ use App\Models\Staff;
 use App\Models\Vehicle;
 use Faker\Provider\ar_EG\Text;
 use Filament\Forms;
+use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
@@ -25,8 +27,14 @@ use Illuminate\Database\Eloquent\Factories\Relationship;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Date;
 use League\Flysystem\Visibility;
 use Livewire\Attributes\Reactive;
+use pxlrbt\FilamentExcel\Actions\Concerns\ExportableAction;
+use pxlrbt\FilamentExcel\Actions\Tables\ExportAction;
+use pxlrbt\FilamentExcel\Columns\Column;
+use pxlrbt\FilamentExcel\Exports\ExcelExport;
+
 
 class BookingResource extends Resource
 {
@@ -291,7 +299,54 @@ class BookingResource extends Resource
                     }),
             ])
             ->modifyQueryUsing(function (Builder $query) {})
-            ->filters([])
+            ->filters([
+                SelectFilter::make('status')
+                    ->options([
+                        'pending' => 'Pending',
+                        'approved' => 'Approved',
+                        'rejected' => 'Rejected',
+                    ]),
+                Filter::make('booking_date')
+                    ->form([
+                        DatePicker::make('from')
+                            ->label('Start Date')
+                            ->required()
+                            ->columnSpan(6),
+                        DatePicker::make('until')
+                            ->label('End Date')
+                            ->required()
+                            ->columnSpan(6),
+                    ])
+                    ->query(function (Builder $query, array $data): Builder {
+                        return $query
+                            ->when(
+                                $data['from'],
+                                fn (Builder $query, $date): Builder => $query->whereDate('booking_date', '>=', $date),
+                            )
+                            ->when(
+                                $data['until'],
+                                fn (Builder $query, $date): Builder => $query->whereDate('booking_date', '<=', $date),
+                            );
+                    }),
+            ])
+            ->headerActions([
+                ExportAction::make()->exports([
+                    ExcelExport::make()->withColumns([
+                        Column::make('user.name')->heading('Admin'),
+                        Column::make('staff.full_name')->heading('Booker'),
+                        Column::make('vehicle.vehicle_type')->heading('Vehicle Type'),
+                        Column::make('vehicle.brand')->heading('Brand'),
+                        Column::make('vehicle.model')->heading('Model'),
+                        Column::make('vehicle.license_plate')->heading('License Plate'),
+                        Column::make('driver.staff.full_name')->heading('Driver'),
+                        Column::make('booking_date')->heading('Booking Date'),
+                        Column::make('start_date')->heading('Start Date'),
+                        Column::make('end_date')->heading('End Date'),
+                        Column::make('purpose')->heading('Purpose'),
+                        Column::make('status')->heading('Status'),
+                    ])
+                ]),
+            ])
             ->actions([
                 Tables\Actions\ViewAction::make(),
                 Tables\Actions\DeleteAction::make(),
