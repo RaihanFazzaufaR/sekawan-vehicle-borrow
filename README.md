@@ -44,6 +44,10 @@ php         - 8.3.3
 laravel     - 11
 filament    - 3.x
 
+# Lampiran
+
+- [Physical Data Model](https://drive.google.com/file/d/1ffhQRHks46ukUoxwaC0lG1GvJLsq_2L0/view?usp=sharing)
+- [Activity Diagram](https://drive.google.com/file/d/1ikQC15Z1PvFbQ3aDia67m7QrhzxktlEL/view?usp=sharing)
 
 # User Manual
 
