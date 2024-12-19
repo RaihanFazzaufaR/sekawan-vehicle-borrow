@@ -49,7 +49,7 @@ filament    - 3.x
 
 ## Halaman Dashboard
 
-![](public\img\dashboard.png)
+![](public/img/dashboard.png)
 
 Berisi:
 
@@ -62,7 +62,7 @@ Berisi:
 
 ## Halaman Booking
 
-![](public\img\booking.png)
+![](public/img/booking.png)
 
 ### Admin
 - Membuat, melihat, menghapus booking kendaraan sesuai dengan ketentuan
@@ -70,7 +70,7 @@ Berisi:
 
 ## Halaman Vehicle
 
-![](public\img\vehicle.png)
+![](public/img/vehicle.png)
 
 ### Admin 
 - Melakukan CRUD pada data kendaraan
