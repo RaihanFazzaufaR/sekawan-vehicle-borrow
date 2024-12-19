@@ -17,7 +17,6 @@ return new class extends Migration
             $table->unsignedBigInteger('approver_id');
             $table->integer('approval_level');
             $table->enum('status', ['pending', 'approved', 'rejected'])->default('pending');
-            $table->date('approved_at')->nullable();
             $table->timestamps();
         });
     }

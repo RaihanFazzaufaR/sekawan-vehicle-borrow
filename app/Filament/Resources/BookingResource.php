@@ -42,6 +42,11 @@ class BookingResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-chat-bubble-left-ellipsis';
 
+    public static function canViewAny(): bool
+    {
+        return Auth::user()?->role === 'admin';
+    }
+
     static function getDriver(int $workplace)
     {
         return Driver::whereHas('staff.company', function (Builder $query) use ($workplace) {
@@ -331,7 +336,32 @@ class BookingResource extends Resource
             ])
             ->headerActions([
                 ExportAction::make()->exports([
-                    ExcelExport::make()->withColumns([
+                    ExcelExport::make()
+                    ->modifyQueryUsing(function (Builder $query) {
+
+                        $filters = request()->input('components.0.snapshot');
+
+                        if ($filters) {
+                            $decodedFilters = json_decode($filters, true);
+                            $tableFilters = $decodedFilters['data']['tableFilters'] ?? [];
+                            $statusFilter = $tableFilters[0]['status'][0]; 
+                            $dateFilters = $tableFilters[0]['booking_date'][0];
+
+                            if ($dateFilters['from']) {
+                                $query->whereDate('booking_date', '>=', $dateFilters['from']);
+                            }
+                            
+                            if($dateFilters['until']) {
+                                $query->whereDate('booking_date', '<=', $dateFilters['until']);
+                            }
+
+                            if ($statusFilter['value']) {
+                                return $query->where('status', $statusFilter['value']);
+                            }
+                        }
+                        return $query;
+                    })
+                    ->withColumns([
                         Column::make('user.name')->heading('Admin'),
                         Column::make('staff.full_name')->heading('Booker'),
                         Column::make('vehicle.vehicle_type')->heading('Vehicle Type'),
